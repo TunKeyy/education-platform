@@ -1,39 +1,59 @@
 import {
-  Body,
   Controller,
-  Delete,
   Get,
-  Param,
   Post,
-  Put,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import { PostsService } from './posts.service';
+import { CreatePostDto, UpdatePostDto, QueryPostsDto } from './dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { User } from '../auth/decorators/user.decorator';
+import type { RequestUser } from '../auth/decorators/user.decorator';
 
-@Controller('posts')
+@Controller('v1/posts')
 export class PostsController {
   constructor(private readonly postsService: PostsService) {}
-  @Get()
-  getPosts(): string {
-    return this.postsService.getPosts();
+
+  @UseGuards(JwtAuthGuard)
+  @Post()
+  create(@Body() createPostDto: CreatePostDto, @User() user: RequestUser) {
+    return this.postsService.createPost(createPostDto, user.id);
   }
 
-  @Post()
-  createPost(@Body() body: any): string {
-    return this.postsService.createPost(body);
+  @Get()
+  findAll(@Query() queryDto: QueryPostsDto) {
+    return this.postsService.findAll(queryDto);
   }
 
   @Get(':id')
-  getPost(@Param('id') id: string): string {
-    return this.postsService.getPost(id);
+  findOne(@Param('id') id: string) {
+    return this.postsService.findOne(id);
   }
 
-  @Put(':id')
-  updatePost(@Param('id') id: string, @Body() body: any): string {
-    return this.postsService.updatePost(id, body);
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id')
+  update(
+    @Param('id') id: string,
+    @Body() updatePostDto: UpdatePostDto,
+    @User() user: RequestUser,
+  ) {
+    return this.postsService.updatePost(id, updatePostDto, user.id);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  deletePost(@Param('id') id: string): string {
-    return this.postsService.deletePost(id);
+  remove(@Param('id') id: string, @User() user: RequestUser) {
+    return this.postsService.deletePost(id, user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/publish')
+  publish(@Param('id') id: string, @User() user: RequestUser) {
+    return this.postsService.publishPost(id, user.id);
   }
 }
