@@ -21,7 +21,23 @@ import { LearningModule } from './routes/learning/learning.module';
 import { AdminModule } from './routes/admin/admin.module';
 
 @Module({
-  imports: [PostsModule, AuthModule, UsersModule, SharedModule, ProfilesModule, ContentModule, CommentsModule, VotesModule, TaxonomyModule, SearchModule, ModerationModule, MediaModule, AiModule, LearningModule, AdminModule],
+  imports: [
+    PostsModule,
+    AuthModule,
+    UsersModule,
+    SharedModule,
+    ProfilesModule,
+    ContentModule,
+    CommentsModule,
+    VotesModule,
+    TaxonomyModule,
+    SearchModule,
+    ModerationModule,
+    MediaModule,
+    AiModule,
+    LearningModule,
+    AdminModule,
+  ],
   controllers: [AppController],
   providers: [
     AppService,
