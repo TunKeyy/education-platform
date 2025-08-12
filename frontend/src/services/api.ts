@@ -201,6 +201,7 @@ export const usersAPI = {
 
   // Update own profile
   updateProfile: async (data: any): Promise<any> => {
+    console.log('Updating profile with data:', data);
     const response = await apiClient.put('/users/profile', data);
     return response.data;
   },

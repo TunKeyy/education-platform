@@ -88,7 +88,8 @@ export class UsersService {
       if (
         updateUserDto.displayName ||
         updateUserDto.bio ||
-        updateUserDto.avatarUrl
+        updateUserDto.avatarUrl ||
+        updateUserDto.levelId
       ) {
         await tx.profile.update({
           where: { userId: id },
@@ -96,6 +97,7 @@ export class UsersService {
             displayName: updateUserDto.displayName,
             bio: updateUserDto.bio,
             avatarUrl: updateUserDto.avatarUrl,
+            levelId: updateUserDto.levelId,
           },
         });
       }
@@ -130,5 +132,40 @@ export class UsersService {
 
   async getModerators() {
     return this.findAll('moderator');
+  }
+
+  async updateProfile(userId: string, updateData: any) {
+    // Check if user exists
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        profile: true,
+        role: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Update profile
+    await this.prisma.profile.update({
+      where: { userId },
+      data: {
+        displayName: updateData.displayName,
+        bio: updateData.bio,
+        avatarUrl: updateData.avatarUrl,
+        levelId: updateData.levelId,
+      },
+    });
+
+    // Return updated user with profile
+    return this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        profile: true,
+        role: true,
+      },
+    });
   }
 }

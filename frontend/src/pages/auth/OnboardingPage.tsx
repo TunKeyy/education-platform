@@ -4,17 +4,20 @@ import { motion } from 'framer-motion';
 import { Star, CheckCircle, ArrowRight, BookOpen, Target } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
-import { useLevels, useSkills } from '../../hooks/useApi';
+import { useLevels, useSkills, useUpdateProfile } from '../../hooks/useApi';
 import { Level, Skill } from '../../types';
+import { useQueryClient } from '@tanstack/react-query';
 
 const OnboardingPage: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [step, setStep] = useState<'level' | 'skills' | 'complete'>('level');
   const [selectedLevel, setSelectedLevel] = useState<string>('');
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
 
   const { data: levels, isLoading: levelsLoading } = useLevels();
   const { data: skills, isLoading: skillsLoading } = useSkills();
+  const updateProfileMutation = useUpdateProfile();
 
   const handleLevelSelect = (levelId: string) => {
     setSelectedLevel(levelId);
@@ -30,13 +33,35 @@ const OnboardingPage: React.FC = () => {
   };
 
   const handleComplete = async () => {
-    // TODO: Save profile with selected level and skills
-    // PATCH /v1/profiles/:id
     try {
-      // For now, just navigate to feed
+      console.log('handleComplete - Starting profile update...');
+      console.log('handleComplete - Selected level:', selectedLevel);
+      console.log('handleComplete - Selected skills:', selectedSkills);
+      
+      // Save profile with selected level
+      const updatedUser = await updateProfileMutation.mutateAsync({
+        levelId: selectedLevel,
+        // Note: Skills are not stored in profile table yet
+        // We could add bio to include selected skills for now
+        bio: selectedSkills.length > 0 
+          ? `Focused on: ${selectedSkills.map(skillId => skills?.find(s => s.id === skillId)?.name).join(', ')}`
+          : undefined
+      });
+      
+      console.log('handleComplete - Profile updated successfully:', updatedUser);
+      console.log('handleComplete - Updated levelId:', updatedUser?.profile?.levelId);
+      
+      // Force refetch of auth data to ensure cache is up to date
+      await queryClient.invalidateQueries({ queryKey: ['auth', 'profile'] });
+      
+      // Wait a bit more to ensure React Query cache is updated
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
       navigate('/feed');
     } catch (error) {
       console.error('Failed to save profile:', error);
+      // Don't prevent navigation if profile update fails
+      navigate('/feed');
     }
   };
 
@@ -253,11 +278,13 @@ const OnboardingPage: React.FC = () => {
               <Button
                 variant="outline"
                 onClick={() => setStep('skills')}
+                disabled={updateProfileMutation.isPending}
               >
                 Back
               </Button>
               <Button
                 onClick={handleComplete}
+                isLoading={updateProfileMutation.isPending}
                 icon={ArrowRight}
                 size="lg"
               >

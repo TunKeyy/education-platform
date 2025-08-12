@@ -14,6 +14,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
+    console.log('JWT Strategy - validating payload:', payload);
+
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
       include: {
@@ -27,15 +29,21 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       },
     });
 
+    console.log('JWT Strategy - user found:', user ? 'YES' : 'NO');
+
     if (!user) {
+      console.log('JWT Strategy - throwing UnauthorizedException');
       throw new UnauthorizedException('User not found');
     }
 
-    return {
+    const result = {
       id: user.id,
       email: user.email,
       roleId: user.roleId,
       profile: user.profile,
     };
+
+    console.log('JWT Strategy - returning user:', result);
+    return result;
   }
 }

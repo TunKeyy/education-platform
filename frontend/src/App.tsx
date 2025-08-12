@@ -34,6 +34,11 @@ const queryClient = new QueryClient({
 const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { data: user, isLoading, error } = useAuth();
 
+  console.log('AuthGuard - user data:', user);
+  console.log('AuthGuard - isLoading:', isLoading);
+  console.log('AuthGuard - error:', error);
+  console.log('AuthGuard - user.profile?.levelId:', user?.profile?.levelId);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-secondary-50">
@@ -51,7 +56,8 @@ const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   }
 
   // Check if user needs onboarding
-  if (!user.profile?.levelId || !user.profile?.skills?.length) {
+  // For now, only check for levelId since skills are stored in bio field
+  if (!user.profile?.levelId) {
     return <Navigate to="/onboarding" replace />;
   }
 
@@ -61,6 +67,10 @@ const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 // Public Route Guard (redirects authenticated users)
 const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { data: user, isLoading } = useAuth();
+
+  console.log('ProtectedRoute - user data:', user);
+  console.log('ProtectedRoute - isLoading:', isLoading);
+  console.log('ProtectedRoute - user.profile?.levelId:', user?.profile?.levelId);
 
   if (isLoading) {
     return (
@@ -76,7 +86,8 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   if (user) {
     // Check if user needs onboarding
-    if (!user.profile?.levelId || !user.profile?.skills?.length) {
+    // For now, only check for levelId since skills are stored in bio field
+    if (!user.profile?.levelId) {
       return <Navigate to="/onboarding" replace />;
     }
     return <Navigate to="/feed" replace />;

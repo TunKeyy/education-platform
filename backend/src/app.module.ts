@@ -41,6 +41,7 @@ import { AdminModule } from './routes/admin/admin.module';
   controllers: [AppController],
   providers: [
     AppService,
+    // Re-enable global RolesGuard to see if we get better error messages
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
@@ -49,6 +50,7 @@ import { AdminModule } from './routes/admin/admin.module';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
+    // Re-enable JWT middleware for authentication
     consumer.apply(JwtMiddleware).forRoutes('*');
   }
 }

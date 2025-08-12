@@ -35,10 +35,11 @@ export class JwtMiddleware implements NestMiddleware {
         });
 
         if (user) {
+          console.log('JWT Middleware: User found', user);
           (req as any).user = user;
         }
-      } catch {
-        // Invalid token, but we continue without setting user
+      } catch (error) {
+        console.error('JWT Middleware: Invalid token', error);
       }
     }
 

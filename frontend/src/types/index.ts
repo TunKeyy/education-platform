@@ -28,10 +28,9 @@ export interface UserProfile {
 
 export interface AuthResponse {
   user: User;
-  tokens: {
-    accessToken: string;
-    refreshToken: string;
-  };
+  profile?: UserProfile;
+  accessToken: string;
+  refreshToken: string;
 }
 
 export interface LoginRequest {

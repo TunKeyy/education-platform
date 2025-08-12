@@ -28,7 +28,6 @@ export class AuthService {
       providerId,
     } = signUpDto;
 
-    // Check if user already exists
     const existingUser = await this.prisma.user.findUnique({
       where: { email },
     });
@@ -37,10 +36,8 @@ export class AuthService {
       throw new ConflictException('User with this email already exists');
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Create user and profile in transaction
     const result = await this.prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
@@ -71,7 +68,6 @@ export class AuthService {
       return { user, profile };
     });
 
-    // Generate tokens
     const tokens = await this.generateTokens(result.user.id);
 
     return {
@@ -97,7 +93,6 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Verify password
     const isPasswordValid = await bcrypt.compare(
       password,
       (user.passwordHash as string) || '',
@@ -107,10 +102,8 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Generate tokens
     const tokens = await this.generateTokens(user.id);
 
-    // Remove password from response
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash, ...userWithoutPassword } = user;
 
@@ -128,7 +121,6 @@ export class AuthService {
         secret: process.env.JWT_REFRESH_SECRET,
       });
 
-      // Generate new tokens
       const tokens = await this.generateTokens(payload.sub as string);
 
       return tokens;
@@ -139,8 +131,6 @@ export class AuthService {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   logout(_refreshTokenDto: RefreshTokenDto) {
-    // In the new schema, we don't store refresh tokens in DB
-    // They are stateless JWTs
     return { message: 'Logged out successfully' };
   }
 

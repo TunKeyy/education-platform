@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { authAPI } from '../services/auth';
 import { postsAPI, commentsAPI, votesAPI } from '../services/content';
-import { taxonomyAPI, searchAPI } from '../services/api';
+import { taxonomyAPI, searchAPI, usersAPI } from '../services/api';
 import { 
   CreatePostRequest,
   CreateCommentRequest,
@@ -26,8 +26,8 @@ export const useLogin = () => {
     mutationFn: ({ email, password }: { email: string; password: string }) =>
       authAPI.login(email, password),
     onSuccess: (data) => {
-      localStorage.setItem('accessToken', data.tokens.accessToken);
-      localStorage.setItem('refreshToken', data.tokens.refreshToken);
+      localStorage.setItem('accessToken', data.accessToken);
+      localStorage.setItem('refreshToken', data.refreshToken);
       queryClient.setQueryData(['auth', 'profile'], data.user);
       toast.success('Welcome back!');
     },
@@ -41,8 +41,8 @@ export const useRegister = () => {
   return useMutation({
     mutationFn: authAPI.register,
     onSuccess: (data) => {
-      localStorage.setItem('accessToken', data.tokens.accessToken);
-      localStorage.setItem('refreshToken', data.tokens.refreshToken);
+      localStorage.setItem('accessToken', data.accessToken);
+      localStorage.setItem('refreshToken', data.refreshToken);
       toast.success('Account created successfully!');
     },
     onError: (error: any) => {
@@ -64,6 +64,25 @@ export const useLogout = () => {
       localStorage.removeItem('refreshToken');
       queryClient.clear();
       toast.success('Logged out successfully');
+    },
+  });
+};
+
+export const useUpdateProfile = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (data: { levelId?: string; displayName?: string; bio?: string; avatarUrl?: string }) =>
+      usersAPI.updateProfile(data),
+    onSuccess: (data) => {
+      console.log('useUpdateProfile - onSuccess - data received:', data);
+      queryClient.setQueryData(['auth', 'profile'], data);
+      queryClient.invalidateQueries({ queryKey: ['auth', 'profile'] });
+      console.log('useUpdateProfile - cache updated and queries invalidated');
+      toast.success('Profile updated successfully!');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to update profile');
     },
   });
 };
@@ -232,15 +251,15 @@ export const useVote = () => {
 // Taxonomy hooks
 // Taxonomy hooks - Updated to match available APIs
 export const useLevels = () => {
-  // Since levels API doesn't exist, return mock data for UI
+  // Since levels API doesn't exist, return mock data for UI that matches database
   const now = new Date().toISOString();
   const mockLevels = [
-    { id: '1', name: 'Beginner', description: 'Just starting your English journey', order: 1, createdAt: now, updatedAt: now },
-    { id: '2', name: 'Elementary', description: 'Basic English skills', order: 2, createdAt: now, updatedAt: now },
-    { id: '3', name: 'Pre-Intermediate', description: 'Building confidence in English', order: 3, createdAt: now, updatedAt: now },
-    { id: '4', name: 'Intermediate', description: 'Comfortable with everyday English', order: 4, createdAt: now, updatedAt: now },
-    { id: '5', name: 'Upper-Intermediate', description: 'Advanced English skills', order: 5, createdAt: now, updatedAt: now },
-    { id: '6', name: 'Advanced', description: 'Near-native proficiency', order: 6, createdAt: now, updatedAt: now },
+    { id: 'A1', name: 'Beginner (A1)', description: 'Just starting your English journey', order: 1, createdAt: now, updatedAt: now },
+    { id: 'A2', name: 'Elementary (A2)', description: 'Basic English skills', order: 2, createdAt: now, updatedAt: now },
+    { id: 'B1', name: 'Pre-Intermediate (B1)', description: 'Building confidence in English', order: 3, createdAt: now, updatedAt: now },
+    { id: 'B2', name: 'Intermediate (B2)', description: 'Comfortable with everyday English', order: 4, createdAt: now, updatedAt: now },
+    { id: 'C1', name: 'Upper-Intermediate (C1)', description: 'Advanced English skills', order: 5, createdAt: now, updatedAt: now },
+    { id: 'C2', name: 'Advanced (C2)', description: 'Near-native proficiency', order: 6, createdAt: now, updatedAt: now },
   ];
   
   return useQuery({
@@ -251,21 +270,15 @@ export const useLevels = () => {
 };
 
 export const useSkills = () => {
-  // Since skills API doesn't exist, return mock data for UI
+  // Since skills API doesn't exist, return mock data for UI that matches database
   const now = new Date().toISOString();
   const mockSkills = [
-    { id: '1', name: 'Grammar', description: 'English grammar rules and structures', createdAt: now, updatedAt: now },
-    { id: '2', name: 'Vocabulary', description: 'Building word knowledge', createdAt: now, updatedAt: now },
-    { id: '3', name: 'Speaking', description: 'Oral communication skills', createdAt: now, updatedAt: now },
-    { id: '4', name: 'Listening', description: 'Audio comprehension', createdAt: now, updatedAt: now },
-    { id: '5', name: 'Reading', description: 'Text comprehension', createdAt: now, updatedAt: now },
-    { id: '6', name: 'Writing', description: 'Written communication', createdAt: now, updatedAt: now },
-    { id: '7', name: 'Pronunciation', description: 'Correct sound production', createdAt: now, updatedAt: now },
-    { id: '8', name: 'Business English', description: 'Professional communication', createdAt: now, updatedAt: now },
-    { id: '9', name: 'Academic English', description: 'Academic writing and speaking', createdAt: now, updatedAt: now },
-    { id: '10', name: 'Conversation', description: 'Everyday conversation skills', createdAt: now, updatedAt: now },
-    { id: '11', name: 'IELTS Prep', description: 'IELTS exam preparation', createdAt: now, updatedAt: now },
-    { id: '12', name: 'TOEFL Prep', description: 'TOEFL exam preparation', createdAt: now, updatedAt: now },
+    { id: 'reading', name: 'Reading', description: 'Text comprehension and reading skills', createdAt: now, updatedAt: now },
+    { id: 'writing', name: 'Writing', description: 'Written communication skills', createdAt: now, updatedAt: now },
+    { id: 'listening', name: 'Listening', description: 'Audio comprehension skills', createdAt: now, updatedAt: now },
+    { id: 'speaking', name: 'Speaking', description: 'Oral communication skills', createdAt: now, updatedAt: now },
+    { id: 'grammar', name: 'Grammar', description: 'English grammar rules and structures', createdAt: now, updatedAt: now },
+    { id: 'vocab', name: 'Vocabulary', description: 'Building word knowledge and vocabulary', createdAt: now, updatedAt: now },
   ];
   
   return useQuery({
