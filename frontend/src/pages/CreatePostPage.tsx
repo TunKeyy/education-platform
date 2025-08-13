@@ -1,11 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useCreatePost } from '../hooks/useApi';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { PlusCircle, Image, Hash, Save, Eye } from 'lucide-react';
+import { 
+  PlusCircle, 
+  Eye, 
+  Upload,
+  FileImage,
+  Music,
+  X
+} from 'lucide-react';
 import Card from '../components/ui/Card';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
+import toast from 'react-hot-toast';
+import { CLOUDINARY_CONFIG, getUploadUrl } from '../config/cloudinary';
+
+interface UploadedMedia {
+  id: string;
+  type: 'image' | 'audio';
+  url: string;
+  name: string;
+}
 
 const CreatePostPage: React.FC = () => {
   const navigate = useNavigate();
@@ -18,11 +34,146 @@ const CreatePostPage: React.FC = () => {
   });
   const [isPreview, setIsPreview] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadedMedia, setUploadedMedia] = useState<UploadedMedia[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const audioInputRef = useRef<HTMLInputElement>(null);
   const createPostMutation = useCreatePost();
+
+  // Upload files to Cloudinary
+  const uploadToCloudinary = async (files: File[]): Promise<UploadedMedia[]> => {
+    const uploadPromises = files.map(async (file) => {
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', CLOUDINARY_CONFIG.UPLOAD_PRESET);
+
+        const response = await fetch(getUploadUrl(), {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Upload failed: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        
+        return {
+          id: data.public_id,
+          name: file.name,
+          url: data.secure_url,
+          type: file.type.startsWith('image/') ? 'image' as const : 'audio' as const,
+        };
+      } catch (error) {
+        console.error('Upload error:', error);
+        toast.error(`Failed to upload ${file.name}`);
+        return null;
+      }
+    });
+
+    const results = await Promise.all(uploadPromises);
+    return results.filter((result): result is NonNullable<typeof result> => result !== null);
+  };
+
+  // Handle image upload
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    if (files.length === 0) return;
+
+    setIsUploading(true);
+    try {
+      // Validate files
+      const validFiles = files.filter(file => {
+        if (!CLOUDINARY_CONFIG.SUPPORTED_IMAGE_TYPES.includes(file.type)) {
+          toast.error(`${file.name} is not a supported image format`);
+          return false;
+        }
+        
+        if (file.size > CLOUDINARY_CONFIG.MAX_IMAGE_SIZE) {
+          toast.error(`${file.name} is too large. Maximum size is 10MB`);
+          return false;
+        }
+        
+        return true;
+      });
+
+      if (validFiles.length === 0) {
+        setIsUploading(false);
+        return;
+      }
+
+      const uploadedFiles = await uploadToCloudinary(validFiles);
+      setUploadedMedia(prev => [...prev, ...uploadedFiles]);
+      
+      toast.success(`Successfully uploaded ${uploadedFiles.length} image(s)`);
+    } catch (error) {
+      toast.error('Failed to upload images');
+    } finally {
+      setIsUploading(false);
+      // Reset file input
+      if (event.target) {
+        event.target.value = '';
+      }
+    }
+  };
+
+  const handleAudioUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    if (files.length === 0) return;
+
+    setIsUploading(true);
+    try {
+      // Validate files
+      const validFiles = files.filter(file => {
+        if (!CLOUDINARY_CONFIG.SUPPORTED_AUDIO_TYPES.includes(file.type)) {
+          toast.error(`${file.name} is not a supported audio format`);
+          return false;
+        }
+        
+        if (file.size > CLOUDINARY_CONFIG.MAX_AUDIO_SIZE) {
+          toast.error(`${file.name} is too large. Maximum size is 50MB`);
+          return false;
+        }
+        
+        return true;
+      });
+
+      if (validFiles.length === 0) {
+        setIsUploading(false);
+        return;
+      }
+
+      const uploadedFiles = await uploadToCloudinary(validFiles);
+      setUploadedMedia(prev => [...prev, ...uploadedFiles]);
+      
+      toast.success(`Successfully uploaded ${uploadedFiles.length} audio file(s)`);
+    } catch (error) {
+      toast.error('Failed to upload audio files');
+    } finally {
+      setIsUploading(false);
+      // Reset file input
+      if (audioInputRef.current) {
+        audioInputRef.current.value = '';
+      }
+    }
+  };
+
+  const removeMedia = (id: string) => {
+    setUploadedMedia(prev => prev.filter(media => media.id !== id));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    
+    // Extract media with type and URL for the post
+    const mediaData = uploadedMedia.map(media => ({
+      type: media.type,
+      url: media.url,
+    }));
+    
     const payload = {
       title: formData.title,
       content: formData.content,
@@ -30,7 +181,8 @@ const CreatePostPage: React.FC = () => {
       categoryId: formData.category || undefined,
       difficulty: formData.difficulty,
       skills: [], // TODO: Add skill selection to form if needed
-  status: 'published' as 'published',
+      status: 'published' as 'published',
+      media: mediaData, // Include uploaded media with type and URL
     };
     createPostMutation.mutate(payload, {
       onSuccess: () => {
@@ -205,10 +357,19 @@ const CreatePostPage: React.FC = () => {
                   </Button>
                   <Button
                     type="submit"
-                    disabled={!formData.title || !formData.content || isSubmitting}
+                    disabled={!formData.title || !formData.content || isSubmitting || isUploading}
                   >
-                    <PlusCircle className="w-4 h-4 mr-2" />
-                    {isSubmitting ? 'Publishing...' : 'Publish Post'}
+                    {isUploading ? (
+                      <>
+                        <Upload className="w-4 h-4 mr-2 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <PlusCircle className="w-4 h-4 mr-2" />
+                        {isSubmitting ? 'Publishing...' : 'Publish Post'}
+                      </>
+                    )}
                   </Button>
                 </div>
               </form>
@@ -229,12 +390,94 @@ const CreatePostPage: React.FC = () => {
               <h3 className="font-medium text-neutral-800 mb-3">
                 Add Media
               </h3>
-              <button className="w-full p-4 border-2 border-dashed border-neutral-200 rounded-lg hover:border-primary-300 transition-colors group">
-                <Image className="w-8 h-8 mx-auto text-neutral-400 group-hover:text-primary-500 mb-2" />
-                <p className="text-sm text-neutral-600 group-hover:text-primary-600">
-                  Upload images
-                </p>
-              </button>
+              
+              {/* Upload Buttons */}
+              <div className="space-y-3">
+                {/* Image Upload */}
+                <button 
+                  type="button"
+                  onClick={() => imageInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="w-full p-4 border-2 border-dashed border-neutral-200 rounded-lg hover:border-primary-300 transition-colors group disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <FileImage className="w-8 h-8 mx-auto text-neutral-400 group-hover:text-primary-500 mb-2" />
+                  <p className="text-sm text-neutral-600 group-hover:text-primary-600">
+                    {isUploading ? 'Uploading...' : 'Upload Images'}
+                  </p>
+                  <p className="text-xs text-neutral-500 mt-1">
+                    JPG, PNG, GIF up to 10MB
+                  </p>
+                </button>
+
+                {/* Audio Upload */}
+                <button 
+                  type="button"
+                  onClick={() => audioInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="w-full p-4 border-2 border-dashed border-neutral-200 rounded-lg hover:border-accent-300 transition-colors group disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Music className="w-8 h-8 mx-auto text-neutral-400 group-hover:text-accent-500 mb-2" />
+                  <p className="text-sm text-neutral-600 group-hover:text-accent-600">
+                    {isUploading ? 'Uploading...' : 'Upload Audio'}
+                  </p>
+                  <p className="text-xs text-neutral-500 mt-1">
+                    MP3, WAV, OGG up to 50MB
+                  </p>
+                </button>
+              </div>
+
+              {/* Hidden File Inputs */}
+              <input
+                ref={imageInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+              <input
+                ref={audioInputRef}
+                type="file"
+                accept="audio/*"
+                multiple
+                onChange={handleAudioUpload}
+                className="hidden"
+              />
+
+              {/* Uploaded Media Preview */}
+              {uploadedMedia.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-neutral-200">
+                  <h4 className="text-sm font-medium text-neutral-700 mb-3">
+                    Uploaded Files ({uploadedMedia.length})
+                  </h4>
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {uploadedMedia.map((media) => (
+                      <div
+                        key={media.id}
+                        className="flex items-center justify-between p-2 bg-neutral-50 rounded-lg"
+                      >
+                        <div className="flex items-center space-x-2 flex-1 min-w-0">
+                          {media.type === 'image' ? (
+                            <FileImage className="w-4 h-4 text-primary-500 flex-shrink-0" />
+                          ) : (
+                            <Music className="w-4 h-4 text-accent-500 flex-shrink-0" />
+                          )}
+                          <span className="text-sm text-neutral-600 truncate">
+                            {media.name}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeMedia(media.id)}
+                          className="p-1 text-neutral-400 hover:text-red-500 transition-colors flex-shrink-0"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </Card>
 
             {/* Writing Tips */}

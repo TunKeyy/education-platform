@@ -14,10 +14,15 @@ import { CreatePostDto, UpdatePostDto, QueryPostsDto } from './dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { User } from '../auth/decorators/user.decorator';
 import type { RequestUser } from '../auth/decorators/user.decorator';
+import { VotesService } from '../votes/votes.service';
+import { TargetType } from '../votes/dto/create-vote.dto';
 
 @Controller('v1/posts')
 export class PostsController {
-  constructor(private readonly postsService: PostsService) {}
+  constructor(
+    private readonly postsService: PostsService,
+    private readonly votesService: VotesService,
+  ) {}
 
   @UseGuards(JwtAuthGuard)
   @Post()
@@ -55,5 +60,22 @@ export class PostsController {
   @Post(':id/publish')
   publish(@Param('id') id: string, @User() user: RequestUser) {
     return this.postsService.publishPost(id, user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/votes')
+  voteOnPost(
+    @Param('id') id: string,
+    @Body() body: { value: 1 | -1 },
+    @User() user: RequestUser,
+  ) {
+    return this.votesService.createVote(
+      {
+        targetId: id,
+        targetType: TargetType.POST,
+        value: body.value,
+      },
+      user.id,
+    );
   }
 }

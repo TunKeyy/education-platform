@@ -146,16 +146,8 @@ export interface Skill {
 
 // Media Types
 export interface Media {
-  id: string;
-  postId?: string;
+  type: 'image' | 'audio' | 'video';
   url: string;
-  filename: string;
-  mimeType: string;
-  size: number;
-  kind: 'image' | 'video' | 'audio' | 'document';
-  alt?: string;
-  createdAt: string;
-  updatedAt: string;
 }
 
 // Search Types
@@ -267,6 +259,7 @@ export interface CreatePostRequest {
   levelId?: string;
   skills: string[];
   tags: string[];
+  media?: Media[];
   difficulty?: 'beginner' | 'intermediate' | 'advanced';
   estimatedReadTime?: number;
   status: 'draft' | 'published';

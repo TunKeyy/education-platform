@@ -14,6 +14,7 @@ export class PostsService {
     const {
       tags,
       status,
+      media,
       categoryId: _categoryId,
       difficulty: _difficulty,
       ...postData
@@ -40,6 +41,43 @@ export class PostsService {
           level: true,
         },
       });
+
+      // Handle media if provided
+      if (media && media.length > 0) {
+        const mediaPromises = media.map((mediaItem, index) => {
+          let mediaType: 'image' | 'audio' | 'video';
+          let mediaUrl: string;
+
+          if (typeof mediaItem === 'string') {
+            // Auto-detect type from URL
+            mediaUrl = mediaItem;
+            if (
+              mediaUrl.includes('/video/') ||
+              mediaUrl.includes('.mp3') ||
+              mediaUrl.includes('.wav') ||
+              mediaUrl.includes('.ogg')
+            ) {
+              mediaType = 'audio';
+            } else {
+              mediaType = 'image';
+            }
+          } else {
+            mediaType = mediaItem.type === 'audio' ? 'audio' : 'image';
+            mediaUrl = mediaItem.url;
+          }
+
+          return tx.postMedia.create({
+            data: {
+              postId: newPost.id,
+              kind: mediaType,
+              url: mediaUrl,
+              meta: { order: index },
+            },
+          });
+        });
+
+        await Promise.all(mediaPromises);
+      }
 
       // Handle tags if provided
       if (tags && tags.length > 0) {
@@ -121,6 +159,9 @@ export class PostsService {
           postTags: {
             include: { tag: true },
           },
+          postMedia: {
+            orderBy: { id: 'asc' },
+          },
           _count: {
             select: { comments: true },
           },
@@ -133,9 +174,13 @@ export class PostsService {
     ]);
 
     return {
-      posts: posts.map((post) => ({
+      data: posts.map((post) => ({
         ...post,
         tags: post.postTags.map((pt) => pt.tag),
+        media: post.postMedia.map((pm) => ({
+          type: pm.kind,
+          url: pm.url,
+        })),
         commentsCount: post._count.comments,
       })),
       pagination: {
@@ -158,6 +203,9 @@ export class PostsService {
         postTags: {
           include: { tag: true },
         },
+        postMedia: {
+          orderBy: { id: 'asc' },
+        },
       },
     });
 
@@ -168,6 +216,10 @@ export class PostsService {
     return {
       ...post,
       tags: post.postTags.map((pt) => pt.tag),
+      media: post.postMedia.map((pm) => ({
+        type: pm.kind,
+        url: pm.url,
+      })),
     };
   }
 

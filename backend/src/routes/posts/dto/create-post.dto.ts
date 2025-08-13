@@ -4,6 +4,7 @@ import {
   IsOptional,
   IsEnum,
   IsArray,
+  IsUrl,
 } from 'class-validator';
 import { LevelId } from '../../profiles/dto/update-profile.dto';
 
@@ -14,6 +15,16 @@ export enum SkillType {
   WRITING = 'writing',
   VOCAB = 'vocab',
   GRAMMAR = 'grammar',
+}
+
+export class MediaDto {
+  @IsString()
+  @IsEnum(['image', 'audio'])
+  type: 'image' | 'audio';
+
+  @IsString()
+  @IsUrl()
+  url: string;
 }
 
 export class CreatePostDto {
@@ -37,6 +48,10 @@ export class CreatePostDto {
   @IsArray()
   @IsString({ each: true })
   tags?: string[];
+
+  @IsOptional()
+  @IsArray()
+  media?: (MediaDto | string)[];
 
   @IsOptional()
   @IsEnum(['draft', 'published'])

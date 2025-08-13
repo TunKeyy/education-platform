@@ -197,11 +197,11 @@ export const useVoteOnPost = () => {
       
       return { previousData };
     },
-    onError: (error, variables, context) => {
+    onError: (error: any, variables, context) => {
       if (context) {
         queryClient.setQueryData(['posts', variables.id], context.previousData);
       }
-      toast.error('Failed to vote');
+      toast.error(error.response?.data?.message || 'Failed to vote');
     },
     onSettled: (data, error, variables) => {
       queryClient.invalidateQueries({ queryKey: ['posts', variables.id] });
