@@ -22,6 +22,8 @@ export const postsAPI = {
     level?: string;
     skills?: string;
     sort?: 'hot' | 'new' | 'top';
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
   }): Promise<PaginatedResponse<Post>> => {
     const response = await apiClient.get('/v1/posts', { params });
     return response.data;
@@ -34,7 +36,7 @@ export const postsAPI = {
     level?: string;
     skills?: string;
   }): Promise<PaginatedResponse<Post>> => {
-    const response = await apiClient.get('/v1/posts', { params });
+    const response = await apiClient.get('/v1/feed', { params });
     return response.data;
   },
 
@@ -67,72 +69,109 @@ export const postsAPI = {
     return response.data;
   },
 
-  // Get posts by user - This endpoint doesn't exist in backend, removing it
-  // getPostsByUser: async (userId: string): Promise<Post[]> => {
-  //   const response = await apiClient.get(`/v1/posts/user/${userId}`);
-  //   return response.data;
-  // },
+  // Vote on post (new direct endpoint)
+  voteOnPost: async (id: string, value: 1 | -1): Promise<Vote> => {
+    const response = await apiClient.post(`/v1/posts/${id}/votes`, { value });
+    return response.data;
+  },
+
+  // Report post (new direct endpoint)
+  reportPost: async (id: string, reason: string): Promise<void> => {
+    await apiClient.post(`/v1/posts/${id}/report`, { reason });
+  },
+
+  // Get comments for post (new direct endpoint)
+  getPostComments: async (id: string, params: {
+    page?: number;
+    limit?: number;
+  }): Promise<PaginatedResponse<Comment>> => {
+    const response = await apiClient.get(`/v1/posts/${id}/comments`, { params });
+    return response.data;
+  },
+
+  // Create comment on post (new direct endpoint)
+  createPostComment: async (id: string, data: {
+    content: string;
+    parentId?: string;
+  }): Promise<Comment> => {
+    const response = await apiClient.post(`/v1/posts/${id}/comments`, data);
+    return response.data;
+  },
 };
 
 // Comments API
 export const commentsAPI = {
-  // Get comments for post
+  // Get comments for post (legacy endpoint - keeping for compatibility)
   getComments: async (postId: string, params: {
     page?: number;
     limit?: number;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }): Promise<PaginatedResponse<Comment>> => {
-    const response = await apiClient.get(`/v1/comments`, { 
-      params: { postId, ...params }
+    const response = await apiClient.get(`/comments/post/${postId}`, { 
+      params
     });
     return response.data;
   },
 
-  // Create comment
+  // Create comment (legacy endpoint - keeping for compatibility)
   createComment: async (data: CreateCommentRequest): Promise<Comment> => {
-    const response = await apiClient.post('/v1/comments', data);
+    const response = await apiClient.post('/comments', data);
     return response.data;
   },
 
   // Update comment
   updateComment: async (id: string, content: string): Promise<Comment> => {
-    const response = await apiClient.patch(`/v1/comments/${id}`, { content });
+    const response = await apiClient.patch(`/comments/${id}`, { content });
     return response.data;
   },
 
   // Delete comment
   deleteComment: async (id: string): Promise<void> => {
-    await apiClient.delete(`/v1/comments/${id}`);
+    await apiClient.delete(`/comments/${id}`);
+  },
+
+  // Vote on comment (new direct endpoint)
+  voteOnComment: async (id: string, value: 1 | -1): Promise<Vote> => {
+    const response = await apiClient.post(`/v1/comments/${id}/votes`, { value });
+    return response.data;
+  },
+
+  // Report comment (new direct endpoint)
+  reportComment: async (id: string, reason: string): Promise<void> => {
+    await apiClient.post(`/v1/comments/${id}/report`, { reason });
   },
 };
 
 // Votes API
 export const votesAPI = {
-  // Vote on post or comment
+  // Vote on post or comment (legacy endpoint - keeping for compatibility)
   vote: async (data: VoteRequest): Promise<Vote> => {
-    const response = await apiClient.post('/v1/votes', data);
+    const response = await apiClient.post('/votes', data);
     return response.data;
   },
 
-  // Remove vote
+  // Remove vote (legacy endpoint)
   removeVote: async (targetId: string, targetType: 'post' | 'comment'): Promise<void> => {
-    await apiClient.delete(`/v1/votes/${targetType}/${targetId}`);
+    await apiClient.delete(`/votes/${targetType}/${targetId}`);
   },
 
-  // Get vote counts
+  // Get vote counts (legacy endpoint)
   getVoteCounts: async (targetId: string, targetType: 'post' | 'comment'): Promise<{
     upvotes: number;
     downvotes: number;
     userVote?: 'upvote' | 'downvote';
   }> => {
-    const response = await apiClient.get(`/v1/votes/stats/${targetType}/${targetId}`);
+    const response = await apiClient.get(`/votes/${targetType}/${targetId}/counts`);
     return response.data;
   },
 
-  // Get user votes
-  getUserVotes: async (targetId: string, targetType: 'post' | 'comment'): Promise<Vote> => {
-    const response = await apiClient.get(`/v1/votes/user/${targetType}/${targetId}`);
+  // Get user votes (legacy endpoint)
+  getUserVotes: async (params: {
+    page?: number;
+    limit?: number;
+  }): Promise<PaginatedResponse<Vote>> => {
+    const response = await apiClient.get('/votes/user', { params });
     return response.data;
   },
 };

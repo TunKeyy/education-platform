@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { authAPI } from '../services/auth';
 import { postsAPI, commentsAPI, votesAPI } from '../services/content';
-import { taxonomyAPI, searchAPI, usersAPI } from '../services/api';
+import { taxonomyAPI, searchAPI, usersAPI, mediaAPI } from '../services/api';
 import { 
   CreatePostRequest,
   CreateCommentRequest,
@@ -166,10 +166,88 @@ export const usePublishPost = () => {
     mutationFn: (id: string) => postsAPI.publishPost(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
+      queryClient.invalidateQueries({ queryKey: ['feed'] });
       toast.success('Post published successfully!');
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to publish post');
+    },
+  });
+};
+
+export const useVoteOnPost = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, value }: { id: string; value: 1 | -1 }) => 
+      postsAPI.voteOnPost(id, value),
+    onMutate: async ({ id, value }) => {
+      await queryClient.cancelQueries({ queryKey: ['posts', id] });
+      
+      const previousData = queryClient.getQueryData(['posts', id]);
+      
+      queryClient.setQueryData(['posts', id], (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          upvotes: old.upvotes + (value === 1 ? 1 : 0),
+          downvotes: old.downvotes + (value === -1 ? 1 : 0),
+        };
+      });
+      
+      return { previousData };
+    },
+    onError: (error, variables, context) => {
+      if (context) {
+        queryClient.setQueryData(['posts', variables.id], context.previousData);
+      }
+      toast.error('Failed to vote');
+    },
+    onSettled: (data, error, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['posts', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      queryClient.invalidateQueries({ queryKey: ['feed'] });
+    },
+  });
+};
+
+export const useReportPost = () => {
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) => 
+      postsAPI.reportPost(id, reason),
+    onSuccess: () => {
+      toast.success('Post reported successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to report post');
+    },
+  });
+};
+
+export const usePostComments = (postId: string, params: {
+  page?: number;
+  limit?: number;
+} = {}) => {
+  return useQuery({
+    queryKey: ['post-comments', postId, params],
+    queryFn: () => postsAPI.getPostComments(postId, params),
+    enabled: !!postId,
+  });
+};
+
+export const useCreatePostComment = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ postId, data }: { postId: string; data: { content: string; parentId?: string } }) =>
+      postsAPI.createPostComment(postId, data),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['post-comments', variables.postId] });
+      queryClient.invalidateQueries({ queryKey: ['comments', variables.postId] });
+      toast.success('Comment added successfully!');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to add comment');
     },
   });
 };
@@ -195,10 +273,64 @@ export const useCreateComment = () => {
     mutationFn: (data: CreateCommentRequest) => commentsAPI.createComment(data),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['comments', data.postId] });
+      queryClient.invalidateQueries({ queryKey: ['post-comments', data.postId] });
       toast.success('Comment added successfully!');
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to add comment');
+    },
+  });
+};
+
+export const useVoteOnComment = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, value }: { id: string; value: 1 | -1 }) => 
+      commentsAPI.voteOnComment(id, value),
+    onMutate: async ({ id, value }) => {
+      await queryClient.cancelQueries({ queryKey: ['comments'] });
+      
+      // Optimistically update comment vote counts
+      queryClient.setQueriesData({ queryKey: ['comments'] }, (old: any) => {
+        if (!old?.data) return old;
+        
+        return {
+          ...old,
+          data: old.data.map((comment: any) =>
+            comment.id === id
+              ? {
+                  ...comment,
+                  upvotes: comment.upvotes + (value === 1 ? 1 : 0),
+                  downvotes: comment.downvotes + (value === -1 ? 1 : 0),
+                }
+              : comment
+          ),
+        };
+      });
+      
+      return { commentId: id };
+    },
+    onError: (error, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ['comments'] });
+      toast.error('Failed to vote on comment');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['comments'] });
+      queryClient.invalidateQueries({ queryKey: ['post-comments'] });
+    },
+  });
+};
+
+export const useReportComment = () => {
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) => 
+      commentsAPI.reportComment(id, reason),
+    onSuccess: () => {
+      toast.success('Comment reported successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to report comment');
     },
   });
 };
@@ -318,7 +450,24 @@ export const useSearch = (params: {
 }) => {
   return useQuery({
     queryKey: ['search', params],
-    queryFn: () => searchAPI.search(params),
+    queryFn: () => {
+      // Transform params to match the v1 API
+      let apiType: 'post' | 'user' | 'tag' | undefined;
+      if (params.type === 'posts') apiType = 'post';
+      else if (params.type === 'users') apiType = 'user';
+      else if (params.type === 'tags') apiType = 'tag';
+      else apiType = undefined;
+
+      const v1Params = {
+        q: params.query,
+        level: params.levelId,
+        tags: params.tags,
+        type: apiType,
+        page: params.page,
+        limit: params.limit,
+      };
+      return searchAPI.search(v1Params);
+    },
     enabled: !!params.query && params.query.length > 0,
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
@@ -330,5 +479,47 @@ export const useSearchSuggestions = (query: string) => {
     queryFn: () => searchAPI.getSuggestions(query),
     enabled: !!query && query.length > 2,
     staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
+// Media hooks
+export const useSignMediaUpload = () => {
+  return useMutation({
+    mutationFn: (data: { mime: string; filename: string }) => 
+      mediaAPI.signUpload(data),
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to sign upload');
+    },
+  });
+};
+
+export const useCompleteMediaUpload = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (data: {
+      postId?: string;
+      url: string;
+      kind: 'image' | 'video' | 'audio' | 'document';
+      meta: Record<string, any>;
+    }) => mediaAPI.completeUpload(data),
+    onSuccess: (data, variables) => {
+      if (variables.postId) {
+        queryClient.invalidateQueries({ queryKey: ['posts', variables.postId] });
+        queryClient.invalidateQueries({ queryKey: ['media', 'post', variables.postId] });
+      }
+      toast.success('Media uploaded successfully!');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to complete upload');
+    },
+  });
+};
+
+export const useMediaForPost = (postId: string) => {
+  return useQuery({
+    queryKey: ['media', 'post', postId],
+    queryFn: () => mediaAPI.getMediaForPost(postId),
+    enabled: !!postId,
   });
 };

@@ -342,7 +342,7 @@ const FeedPage: React.FC = () => {
                   <p>Be the first to start a discussion!</p>
                   <Button
                     className="mt-4"
-                    onClick={() => navigate('/post/new')}
+                    onClick={() => navigate('/create-post')}
                   >
                     Create First Post
                   </Button>

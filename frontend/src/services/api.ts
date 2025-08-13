@@ -8,27 +8,31 @@ import {
 
 // Taxonomy API
 export const taxonomyAPI = {
-  // Categories - These endpoints don't exist in backend, commenting out
-  // getCategories: async (): Promise<Category[]> => {
-  //   const response = await apiClient.get('/taxonomy/categories');
-  //   return response.data;
-  // },
-
-  // Tags
+  // Tags (v1 endpoint)
   getTags: async (): Promise<Tag[]> => {
-    const response = await apiClient.get('/v1/taxonomy/tags');
+    const response = await apiClient.get('/v1/tags');
+    return response.data;
+  },
+
+  // Tags (legacy endpoint - keeping for compatibility)
+  getTagsLegacy: async (params?: {
+    search?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<PaginatedResponse<Tag>> => {
+    const response = await apiClient.get('/taxonomy/tags', { params });
     return response.data;
   },
 
   getPopularTags: async (limit?: number): Promise<Tag[]> => {
-    const response = await apiClient.get('/v1/taxonomy/tags/popular', {
+    const response = await apiClient.get('/taxonomy/tags/popular', {
       params: { limit }
     });
     return response.data;
   },
 
   searchTags: async (query: string, limit?: number): Promise<Tag[]> => {
-    const response = await apiClient.get('/v1/taxonomy/tags/search', {
+    const response = await apiClient.get('/taxonomy/tags/search', {
       params: { q: query, limit }
     });
     return response.data;
@@ -38,7 +42,7 @@ export const taxonomyAPI = {
     name: string;
     description?: string;
   }): Promise<Tag> => {
-    const response = await apiClient.post('/v1/taxonomy/tags', data);
+    const response = await apiClient.post('/taxonomy/tags', data);
     return response.data;
   },
 
@@ -46,36 +50,43 @@ export const taxonomyAPI = {
     name?: string;
     description?: string;
   }): Promise<Tag> => {
-    const response = await apiClient.patch(`/v1/taxonomy/tags/${id}`, data);
+    const response = await apiClient.patch(`/taxonomy/tags/${id}`, data);
     return response.data;
   },
 
   deleteTag: async (id: string): Promise<void> => {
-    await apiClient.delete(`/v1/taxonomy/tags/${id}`);
+    await apiClient.delete(`/taxonomy/tags/${id}`);
   },
 
   getTagById: async (id: string): Promise<Tag> => {
-    const response = await apiClient.get(`/v1/taxonomy/tags/${id}`);
+    const response = await apiClient.get(`/taxonomy/tags/${id}`);
     return response.data;
   },
 
   getTagBySlug: async (slug: string): Promise<Tag> => {
-    const response = await apiClient.get(`/v1/taxonomy/tags/slug/${slug}`);
+    const response = await apiClient.get(`/taxonomy/tags/slug/${slug}`);
     return response.data;
   },
-
-  // Levels and Skills don't exist in backend - commenting out
-  // getLevels: async (): Promise<Level[]> => {
-  //   const response = await apiClient.get('/v1/levels');
-  //   return response.data;
-  // },
 };
 
 // Search API
 export const searchAPI = {
-  // Global search
-  search: async (params: SearchRequest): Promise<SearchResponse | PaginatedResponse<any>> => {
+  // Enhanced v1 search
+  search: async (params: {
+    q: string;
+    tags?: string;
+    level?: string;
+    type?: 'post' | 'user' | 'tag';
+    page?: number;
+    limit?: number;
+  }): Promise<SearchResponse | PaginatedResponse<any>> => {
     const response = await apiClient.get('/v1/search', { params });
+    return response.data;
+  },
+
+  // Legacy global search
+  searchLegacy: async (params: SearchRequest): Promise<SearchResponse | PaginatedResponse<any>> => {
+    const response = await apiClient.get('/search', { params });
     return response.data;
   },
 
@@ -85,8 +96,8 @@ export const searchAPI = {
     users: Array<{ id: string; profile: { username: string; displayName: string }; type: 'user' }>;
     tags: Array<{ id: string; name: string; slug: string; type: 'tag' }>;
   }> => {
-    const response = await apiClient.get('/v1/search/suggestions', {
-      params: { query, limit }
+    const response = await apiClient.get('/search/suggestions', {
+      params: { q: query, limit }
     });
     return response.data;
   },
@@ -128,10 +139,10 @@ export const mediaAPI = {
     await apiClient.delete(`/v1/media/${id}`);
   },
 
-  // Sign upload URL (for future Cloudinary integration)
+  // Sign upload URL (new v1 endpoint)
   signUpload: async (data: {
+    mime: string;
     filename: string;
-    mimeType: string;
   }): Promise<{
     uploadUrl: string;
     publicUrl: string;
@@ -141,12 +152,12 @@ export const mediaAPI = {
     return response.data;
   },
 
-  // Complete upload
+  // Complete upload (new v1 endpoint)
   completeUpload: async (data: {
     postId?: string;
     url: string;
     kind: 'image' | 'video' | 'audio' | 'document';
-    metadata: Record<string, any>;
+    meta: Record<string, any>;
   }) => {
     const response = await apiClient.post('/v1/media/complete', data);
     return response.data;

@@ -11,7 +11,17 @@ export class PostsService {
   constructor(private prisma: PrismaService) {}
 
   async createPost(createPostDto: CreatePostDto, authorId: string) {
-    const { tags, ...postData } = createPostDto;
+    const {
+      tags,
+      status,
+      categoryId: _categoryId,
+      difficulty: _difficulty,
+      ...postData
+    } = createPostDto;
+    // categoryId and difficulty are ignored as they don't exist in the DB schema
+    void _categoryId;
+    void _difficulty;
+    const postStatus = status === 'published' ? 'published' : 'published';
 
     const post = await this.prisma.$transaction(async (tx) => {
       // Create post
@@ -20,7 +30,8 @@ export class PostsService {
           ...postData,
           authorId,
           skills: createPostDto.skills,
-          status: 'draft',
+          status: postStatus,
+          publishedAt: new Date(),
         },
         include: {
           author: {

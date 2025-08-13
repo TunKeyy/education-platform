@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useCreatePost } from '../hooks/useApi';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { PlusCircle, Image, Hash, Save, Eye } from 'lucide-react';
@@ -17,16 +18,29 @@ const CreatePostPage: React.FC = () => {
   });
   const [isPreview, setIsPreview] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const createPostMutation = useCreatePost();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false);
-      navigate('/feed');
-    }, 1000);
+    const payload = {
+      title: formData.title,
+      content: formData.content,
+      tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
+      categoryId: formData.category || undefined,
+      difficulty: formData.difficulty,
+      skills: [], // TODO: Add skill selection to form if needed
+  status: 'published' as 'published',
+    };
+    createPostMutation.mutate(payload, {
+      onSuccess: () => {
+        setIsSubmitting(false);
+        navigate('/feed');
+      },
+      onError: () => {
+        setIsSubmitting(false);
+      },
+    });
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -180,7 +194,7 @@ const CreatePostPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Submit Buttons */}
+                {/* Submit Button */}
                 <div className="flex items-center justify-between pt-6 border-t border-neutral-200">
                   <Button
                     type="button"
@@ -189,25 +203,13 @@ const CreatePostPage: React.FC = () => {
                   >
                     Cancel
                   </Button>
-
-                  <div className="flex items-center space-x-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled={isSubmitting}
-                    >
-                      <Save className="w-4 h-4 mr-2" />
-                      Save Draft
-                    </Button>
-                    
-                    <Button
-                      type="submit"
-                      disabled={!formData.title || !formData.content || isSubmitting}
-                    >
-                      <PlusCircle className="w-4 h-4 mr-2" />
-                      {isSubmitting ? 'Publishing...' : 'Publish Post'}
-                    </Button>
-                  </div>
+                  <Button
+                    type="submit"
+                    disabled={!formData.title || !formData.content || isSubmitting}
+                  >
+                    <PlusCircle className="w-4 h-4 mr-2" />
+                    {isSubmitting ? 'Publishing...' : 'Publish Post'}
+                  </Button>
                 </div>
               </form>
             </Card>

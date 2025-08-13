@@ -398,6 +398,25 @@
       "name": "Posts",
       "item": [
         {
+          "name": "Get Feed",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/feed?page=1&limit=10&level=A1&skills=reading,writing",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "feed"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "10"},
+                {"key": "level", "value": "A1"},
+                {"key": "skills", "value": "reading,writing"}
+              ]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Get All Posts",
           "request": {
             "method": "GET",
@@ -414,6 +433,27 @@
                 {"key": "tag", "value": ""},
                 {"key": "sortBy", "value": "createdAt"},
                 {"key": "sortOrder", "value": "desc"}
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Explore Posts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/posts?tag=grammar&level=A1&skills=reading&sort=hot&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "posts"],
+              "query": [
+                {"key": "tag", "value": "grammar"},
+                {"key": "level", "value": "A1"},
+                {"key": "skills", "value": "reading"},
+                {"key": "sort", "value": "hot"},
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "10"}
               ]
             }
           },
@@ -480,6 +520,127 @@
               "raw": "{{baseUrl}}/v1/posts/{{postId}}",
               "host": ["{{baseUrl}}"],
               "path": ["v1", "posts", "{{postId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Publish Post",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/posts/{{postId}}/publish",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "posts", "{{postId}}", "publish"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Vote on Post",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"value\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/posts/{{postId}}/votes",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "posts", "{{postId}}", "votes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Report Post",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"spam\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/posts/{{postId}}/report",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "posts", "{{postId}}", "report"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Post Comments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/posts/{{postId}}/comments?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "posts", "{{postId}}", "comments"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "10"}
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Comment on Post",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"This is a helpful comment about the grammar lesson!\",\n  \"parentId\": null\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/posts/{{postId}}/comments",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "posts", "{{postId}}", "comments"]
             }
           },
           "response": []
@@ -639,6 +800,58 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "Vote on Comment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"value\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/comments/{{commentId}}/votes",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "comments", "{{commentId}}", "votes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Report Comment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"inappropriate\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/comments/{{commentId}}/report",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "comments", "{{commentId}}", "report"]
+            }
+          },
+          "response": []
         }
       ]
     },
@@ -755,6 +968,19 @@
     {
       "name": "Taxonomy",
       "item": [
+        {
+          "name": "Get All Tags (v1)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/tags",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "tags"]
+            }
+          },
+          "response": []
+        },
         {
           "name": "Get All Categories",
           "request": {
@@ -888,6 +1114,27 @@
                 {"key": "page", "value": "1"},
                 {"key": "limit", "value": "10"},
                 {"key": "sortBy", "value": "relevance"}
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Search v1 (Enhanced)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/search?q=grammar&tags=present-tense,grammar&level=A1&type=post&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "search"],
+              "query": [
+                {"key": "q", "value": "grammar"},
+                {"key": "tags", "value": "present-tense,grammar"},
+                {"key": "level", "value": "A1"},
+                {"key": "type", "value": "post"},
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "10"}
               ]
             }
           },
@@ -1044,6 +1291,58 @@
               "raw": "{{baseUrl}}/media/{{mediaId}}",
               "host": ["{{baseUrl}}"],
               "path": ["media", "{{mediaId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Sign Media Upload",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mime\": \"image/jpeg\",\n  \"filename\": \"example.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/media/sign",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "media", "sign"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Complete Media Upload",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"postId\": \"{{postId}}\",\n  \"url\": \"https://storage.example.com/uploads/example.jpg\",\n  \"kind\": \"image\",\n  \"meta\": {\n    \"width\": 1920,\n    \"height\": 1080,\n    \"size\": 256000\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/media/complete",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "media", "complete"]
             }
           },
           "response": []

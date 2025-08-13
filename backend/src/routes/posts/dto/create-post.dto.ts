@@ -37,6 +37,19 @@ export class CreatePostDto {
   @IsArray()
   @IsString({ each: true })
   tags?: string[];
+
+  @IsOptional()
+  @IsEnum(['draft', 'published'])
+  status?: 'draft' | 'published';
+
+  // These fields are sent by frontend but not stored in DB - will be ignored
+  @IsOptional()
+  @IsString()
+  categoryId?: string;
+
+  @IsOptional()
+  @IsEnum(['beginner', 'intermediate', 'advanced'])
+  difficulty?: 'beginner' | 'intermediate' | 'advanced';
 }
 
 export class UpdatePostDto {
