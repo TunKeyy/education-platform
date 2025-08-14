@@ -3,14 +3,14 @@
 
 export const CLOUDINARY_CONFIG = {
   // Your Cloudinary cloud name
-  CLOUD_NAME: 'do4r15fue',
+  CLOUD_NAME: process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || '',
   
   // Your upload preset (must be configured in Cloudinary dashboard)
-  UPLOAD_PRESET: 'english-community',
-  
+  UPLOAD_PRESET: process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || '',
+
   // API base URL
-  UPLOAD_URL: 'https://api.cloudinary.com/v1_1/do4r15fue/upload',
-  
+  UPLOAD_URL: `https://api.cloudinary.com/v1_1/${process.env.REACT_APP_CLOUDINARY_CLOUD_NAME}/upload`,
+
   // File size limits (in bytes)
   MAX_IMAGE_SIZE: 10 * 1024 * 1024, // 10MB
   MAX_AUDIO_SIZE: 50 * 1024 * 1024, // 50MB
