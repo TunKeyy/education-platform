@@ -61,6 +61,8 @@ model User {
   artifacts    Artifact[]
   quizSubmissions QuizSubmission[]
   reviewedModerations ModerationQueue[] @relation("Reviewer")
+  contributions Contribution[] @relation("Contributor")
+  moderatedContributions Contribution[] @relation("Moderator")
   
   @@unique([provider, providerId], map: "ux_provider")
   @@map("users")
@@ -135,12 +137,13 @@ model Post {
   updatedAt     DateTime    @updatedAt @map("updated_at")
   
   // Relations
-  author    User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  level     Level?      @relation(fields: [levelId], references: [id])
-  postTags  PostTag[]
-  postMedia PostMedia[]
-  comments  Comment[]
-  artifacts Artifact[]
+  author        User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  level         Level?         @relation(fields: [levelId], references: [id])
+  postTags      PostTag[]
+  postMedia     PostMedia[]
+  comments      Comment[]
+  artifacts     Artifact[]
+  contributions Contribution[]
   
   @@index([status, hotScore(sort: Desc), createdAt(sort: Desc)], map: "idx_posts_status_hot")
   @@index([levelId], map: "idx_posts_level")
@@ -238,6 +241,45 @@ model CommentTree {
   @@id([ancestorId, descendantId])
   @@index([descendantId], map: "idx_ct_desc")
   @@map("comment_tree")
+}
+
+// ===== Contributions (Growth Hack Feature) =====
+enum ContributionType {
+  edit
+  add_example
+  add_question
+}
+
+enum ContributionStatus {
+  pending
+  approved
+  rejected
+}
+
+model Contribution {
+  id            String            @id @default(cuid())
+  postId        String            @map("post_id")
+  contributorId String            @map("contributor_id")
+  type          ContributionType
+  content       String            @db.Text
+  description   String?           @db.Text
+  status        ContributionStatus @default(pending)
+  moderatorId   String?           @map("moderator_id")
+  moderatorNote String?           @map("moderator_note") @db.Text
+  pointsAwarded Int               @default(0) @map("points_awarded")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+  approvedAt    DateTime?         @map("approved_at")
+  
+  // Relations
+  post        Post  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  contributor User  @relation("Contributor", fields: [contributorId], references: [id], onDelete: Cascade)
+  moderator   User? @relation("Moderator", fields: [moderatorId], references: [id], onDelete: SetNull)
+  
+  @@index([postId, status], map: "idx_contributions_post_status")
+  @@index([contributorId], map: "idx_contributions_contributor")
+  @@index([status, createdAt], map: "idx_contributions_status_time")
+  @@map("contributions")
 }
 
 // ===== Votes (post|comment) =====

@@ -24,12 +24,3 @@ export const CLOUDINARY_CONFIG = {
 export const getUploadUrl = () => {
   return `https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.CLOUD_NAME}/upload`;
 };
-
-// Instructions for setup:
-// 1. Sign up for a free Cloudinary account at https://cloudinary.com
-// 2. Go to your Dashboard and copy your Cloud Name
-// 3. Go to Settings > Upload and create an Upload Preset
-//    - Set Mode to "Unsigned" for frontend uploads
-//    - Configure any desired transformations or restrictions
-// 4. Update CLOUD_NAME and UPLOAD_PRESET above
-// 5. The UPLOAD_URL will be automatically constructed

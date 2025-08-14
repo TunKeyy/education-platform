@@ -150,6 +150,42 @@ export interface Media {
   url: string;
 }
 
+// Contribution Types (Growth Hack)
+export interface Contribution {
+  id: string;
+  postId: string;
+  contributorId: string;
+  type: 'edit' | 'add_example' | 'add_question';
+  content: string;
+  description?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  moderatorId?: string;
+  moderatorNote?: string;
+  pointsAwarded: number;
+  createdAt: string;
+  updatedAt: string;
+  approvedAt?: string;
+  contributor: User;
+  moderator?: User;
+}
+
+export interface CreateContributionRequest {
+  type: 'edit' | 'add_example' | 'add_question';
+  content: string;
+  description?: string;
+}
+
+export interface ContributionStats {
+  period: 'week' | 'month';
+  totalContributions: number;
+  topContributors: {
+    contributor: User;
+    totalContributions: number;
+    totalPoints: number;
+    contributions: Contribution[];
+  }[];
+}
+
 // Search Types
 export interface SearchRequest {
   query: string;

@@ -353,4 +353,19 @@ export class PostsService {
       },
     });
   }
+
+  // Update user reputation and points (for Growth Hack)
+  async updateUserReputation(
+    userId: string,
+    points: number,
+    reputation: number,
+  ) {
+    return this.prisma.profile.update({
+      where: { userId },
+      data: {
+        points: { increment: points },
+        reputation: { increment: reputation },
+      },
+    });
+  }
 }

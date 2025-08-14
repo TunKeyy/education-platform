@@ -16,12 +16,14 @@ import { User } from '../auth/decorators/user.decorator';
 import type { RequestUser } from '../auth/decorators/user.decorator';
 import { VotesService } from '../votes/votes.service';
 import { TargetType } from '../votes/dto/create-vote.dto';
+import { CommentsService } from '../comments/comments.service';
 
 @Controller('v1/posts')
 export class PostsController {
   constructor(
     private readonly postsService: PostsService,
     private readonly votesService: VotesService,
+    private readonly commentsService: CommentsService,
   ) {}
 
   @UseGuards(JwtAuthGuard)
@@ -74,6 +76,36 @@ export class PostsController {
         targetId: id,
         targetType: TargetType.POST,
         value: body.value,
+      },
+      user.id,
+    );
+  }
+
+  @Get(':id/comments')
+  getPostComments(
+    @Param('id') id: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.commentsService.findAll({
+      postId: id,
+      page: page || '1',
+      limit: limit || '20',
+    });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/comments')
+  createPostComment(
+    @Param('id') id: string,
+    @Body() body: { content: string; parentId?: string },
+    @User() user: RequestUser,
+  ) {
+    return this.commentsService.createComment(
+      {
+        content: body.content,
+        postId: id,
+        parentId: body.parentId,
       },
       user.id,
     );

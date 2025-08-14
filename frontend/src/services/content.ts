@@ -7,7 +7,10 @@ import {
   UpdatePostRequest, 
   CreateCommentRequest,
   VoteRequest,
-  Vote
+  Vote,
+  Contribution,
+  CreateContributionRequest,
+  ContributionStats
 } from '../types';
 
 // Posts API
@@ -84,7 +87,7 @@ export const postsAPI = {
   getPostComments: async (id: string, params: {
     page?: number;
     limit?: number;
-  }): Promise<PaginatedResponse<Comment>> => {
+  }): Promise<{ comments: Comment[]; pagination: any }> => {
     const response = await apiClient.get(`/v1/posts/${id}/comments`, { params });
     return response.data;
   },
@@ -172,6 +175,40 @@ export const votesAPI = {
     limit?: number;
   }): Promise<PaginatedResponse<Vote>> => {
     const response = await apiClient.get('/votes/user', { params });
+    return response.data;
+  },
+};
+
+// Contributions API (Growth Hack)
+export const contributionsAPI = {
+  // Create contribution
+  createContribution: async (postId: string, data: CreateContributionRequest): Promise<Contribution> => {
+    const response = await apiClient.post(`/v1/posts/${postId}/contributions`, data);
+    return response.data;
+  },
+
+  // Get contributions for a post
+  getPostContributions: async (postId: string, status?: 'pending' | 'approved' | 'rejected'): Promise<Contribution[]> => {
+    const response = await apiClient.get(`/v1/posts/${postId}/contributions`, {
+      params: { status },
+    });
+    return response.data;
+  },
+
+  // Moderate contribution (approve/reject)
+  moderateContribution: async (contributionId: string, data: {
+    status: 'pending' | 'approved' | 'rejected';
+    moderatorNote?: string;
+  }): Promise<Contribution> => {
+    const response = await apiClient.patch(`/v1/posts/contributions/${contributionId}/moderate`, data);
+    return response.data;
+  },
+
+  // Get contribution stats for leaderboard
+  getContributionStats: async (period: 'week' | 'month' = 'week'): Promise<ContributionStats> => {
+    const response = await apiClient.get('/v1/posts/contributors/stats', {
+      params: { period },
+    });
     return response.data;
   },
 };

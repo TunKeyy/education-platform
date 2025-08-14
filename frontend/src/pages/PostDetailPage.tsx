@@ -23,13 +23,17 @@ import {
   useReportPost,
   useCreatePostComment,
   useVoteOnComment,
-  useReportComment
+  useReportComment,
+  useAuth
 } from '../hooks/useApi';
 import { Comment } from '../types';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
+import { ContributionModal } from '../components/ContributionModal';
+import { ContributionsList } from '../components/ContributionsList';
 import toast from 'react-hot-toast';
+import { c } from 'framer-motion/dist/types.d-Cjd591yU';
 
 const PostDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -38,10 +42,14 @@ const PostDetailPage: React.FC = () => {
   const [reportReason, setReportReason] = useState('');
   const [commentContent, setCommentContent] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [showContributionModal, setShowContributionModal] = useState(false);
 
   // API hooks
   const { data: post, isLoading: postLoading, error: postError } = usePost(id!);
   const { data: comments, isLoading: commentsLoading } = usePostComments(id!, { page: 1, limit: 50 });
+  console.log("comments full object", comments);
+  console.log("comments.comments", comments?.comments);
+  const { data: user } = useAuth();
   const voteOnPost = useVoteOnPost();
   const reportPost = useReportPost();
   const createComment = useCreatePostComment();
@@ -326,7 +334,7 @@ const PostDetailPage: React.FC = () => {
       >
         <Card className="p-6">
           <h3 className="font-semibold text-neutral-800 mb-6">
-            Comments ({comments?.data?.length || 0})
+            Comments ({comments?.comments?.length || 0})
           </h3>
           
           {commentsLoading ? (
@@ -343,9 +351,9 @@ const PostDetailPage: React.FC = () => {
                 </div>
               ))}
             </div>
-          ) : comments?.data?.length ? (
+          ) : comments?.comments?.length ? (
             <div className="space-y-6">
-              {comments.data.map((comment) => (
+              {comments.comments.map((comment) => (
                 <CommentItem
                   key={comment.id}
                   comment={comment}
@@ -369,6 +377,32 @@ const PostDetailPage: React.FC = () => {
           )}
         </Card>
       </motion.div>
+
+      {/* Contributions */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        <Card className="p-6">          
+          {post && (
+            <ContributionsList 
+              postId={post.id} 
+              onRequestContribution={() => setShowContributionModal(true)}
+            />
+          )}
+        </Card>
+      </motion.div>
+
+      {/* Contribution Modal */}
+      {showContributionModal && post && (
+        <ContributionModal
+          isOpen={showContributionModal}
+          postId={post.id}
+          postTitle={post.title}
+          onClose={() => setShowContributionModal(false)}
+        />
+      )}
 
       {/* Report Dialog */}
       {showReportDialog && (
