@@ -29,17 +29,19 @@ services:
       dockerfile: Dockerfile
     container_name: education_platform_app
     restart: unless-stopped
+    env_file:
+      - .env
     ports:
       - "3001:3000"
     environment:
       NODE_ENV: production
       DATABASE_URL: "mysql://root:rootpassword@mysql:3306/education_platform"
-      JWT_SECRET: "your-super-secret-jwt-key-change-this-in-production"
-      JWT_EXPIRES_IN: "1h"
-      JWT_REFRESH_SECRET: "your-super-secret-refresh-key-change-this-in-production"
-      JWT_REFRESH_EXPIRES_IN: "7d"
-      ACCESS_TOKEN_SECRET: "your-access-token-secret"
-      REFRESH_TOKEN_SECRET: "your-refresh-token-secret"
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN}
+      ACCESS_TOKEN_SECRET: ${ACCESS_TOKEN_SECRET}
+      REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET}
       PORT: 3000
     depends_on:
       mysql:
