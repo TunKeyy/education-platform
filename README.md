@@ -1,119 +1,281 @@
 # English Education Platform
 
-A comprehensive full-stack application for English language learning with AI assistance, moderation, and community features.
+A comprehensive full-stack application for English language learning with AI assistance, community features, growth hack system, and robust moderation tools.
 
-## Project Structure
+## 🚀 Project Overview
+
+This platform combines educational content management with social learning features, implementing a point-based contribution system to encourage community engagement. Users can create posts, contribute improvements, and learn through AI-powered assistance.
+
+## 📁 Project Structure
 
 ```
 education-platform/
-├── backend/          # NestJS API Server
-│   ├── src/          # Source code
-│   ├── prisma/       # Database schema and migrations
-│   ├── test/         # Test files
-│   └── docs/         # API documentation
-└── frontend/         # ReactJS Web Application (To be implemented)
+├── backend/                    # NestJS API Server
+│   ├── src/
+│   │   ├── routes/            # Feature modules
+│   │   │   ├── auth/          # Authentication & authorization
+│   │   │   ├── users/         # User management
+│   │   │   ├── posts/         # Content creation & management
+│   │   │   ├── comments/      # Threaded discussions
+│   │   │   ├── votes/         # Upvoting/downvoting system
+│   │   │   ├── search/        # Advanced content discovery
+│   │   │   ├── media/         # File upload & management
+│   │   │   ├── moderation/    # Content moderation & reporting
+│   │   │   ├── admin/         # System administration
+│   │   │   ├── content/       # Content management
+│   │   │   └── profiles/      # User profiles & preferences
+│   │   ├── shared/            # Common services & utilities
+│   │   └── middleware/        # Custom middleware
+│   ├── prisma/                # Database schema & migrations
+│   ├── docker-compose.yml     # Docker services configuration
+│   └── docs/                  # API documentation
+└── frontend/                   # React TypeScript Application
+    ├── src/
+    │   ├── components/        # Reusable UI components
+    │   ├── pages/             # Application pages
+    │   ├── hooks/             # Custom React hooks
+    │   ├── services/          # API service layer
+    │   ├── types/             # TypeScript type definitions
+    │   ├── config/            # Configuration files
+    │   └── utils/             # Utility functions
+    ├── public/                # Static assets
+    └── build/                 # Production build
 ```
 
-## Backend (NestJS API)
+## 🛠️ Tech Stack
 
-The backend is a robust NestJS application with 12 comprehensive modules:
+### Backend (NestJS)
+- **Framework**: NestJS 11.x with TypeScript
+- **Database**: MySQL 8.0 with Prisma ORM 6.x
+- **Authentication**: JWT with Passport.js
+- **Validation**: Class-validator & Class-transformer
+- **Documentation**: Postman Collection & API docs
+- **Testing**: Jest with comprehensive test coverage
+- **Containerization**: Docker & Docker Compose
 
-### 🔧 Core Modules
-- **Authentication** - JWT-based auth with role-based access control
-- **Users** - User management and profiles
-- **Posts** - Content creation and management
-- **Comments** - Threaded discussions
-- **Votes** - Upvoting/downvoting system
+### Frontend (React)
+- **Framework**: React 19.x with TypeScript
+- **State Management**: TanStack React Query (React Query v5)
+- **Styling**: Tailwind CSS 3.x with custom components
+- **Routing**: React Router DOM 7.x
+- **Forms**: React Hook Form with Yup validation
+- **Animations**: Framer Motion
+- **Icons**: Lucide React
+- **HTTP Client**: Axios
+- **Notifications**: React Hot Toast
 
-### 📚 Educational Features
-- **Taxonomy** - Learning levels, skills, and categories
-- **Search** - Advanced content discovery
-- **Media** - File upload and management
-- **Learning Artifacts** - Educational resources and tracking
-- **AI Assist** - AI-powered learning assistance
+## ✨ Key Features
 
-### 🛡️ Moderation & Admin
-- **Moderation** - Content moderation and reporting
-- **Admin** - System administration and analytics
+### 🔐 Authentication & Authorization
+- JWT-based authentication with refresh tokens
+- Role-based access control (Admin, Moderator, Learner)
+- Social login integration ready
+- Secure password hashing with bcrypt
 
-### 🚀 Getting Started with Backend
+### 📚 Content Management
+- Rich text post creation and editing
+- Media upload (images, audio) with Cloudinary integration
+- Hierarchical commenting system
+- Content moderation and reporting
+- Voting system (upvote/downvote)
+- Post categorization by learning levels
 
-```bash
-cd backend
-npm install
-npm run build
-npm run start:dev
-```
+### 🎯 Growth Hack System
+- **Contribution Types**:
+  - Edit posts (5 points)
+  - Add examples (3 points)
+  - Ask questions (2 points)
+- Point-based reward system
+- Community contribution tracking
+- Moderation workflow for contributions
 
-For detailed backend setup instructions, see [backend/EDUCATION_PLATFORM_SETUP.md](backend/EDUCATION_PLATFORM_SETUP.md)
+### 🤖 AI Integration
+- AI-powered learning assistance
+- Smart content recommendations
+- Automated content analysis
 
-### 📡 API Documentation
-- **Postman Collection**: [backend/postman_collection.json](backend/postman_collection.json)
-- **API Docs**: [backend/API_DOCUMENTATION.md](backend/API_DOCUMENTATION.md)
-- **Database Schema**: [backend/DATABASE_SCHEMA_OVERVIEW.md](backend/DATABASE_SCHEMA_OVERVIEW.md)
+### � Advanced Features
+- Real-time search and filtering
+- User profiles with learning progress
+- Reputation system
+- Content analytics
+- File management system
+- Comprehensive admin dashboard
 
-## Frontend (ReactJS) - Coming Soon
-
-The frontend will be a modern ReactJS application that integrates with the backend APIs to provide:
-
-- **Student Dashboard** - Learning progress and recommendations
-- **Content Creation** - Rich text editor for posts and comments
-- **AI Chat Interface** - Interactive learning assistance
-- **Community Features** - Social learning and discussions
-- **Admin Panel** - System management interface
-
-### Planned Frontend Tech Stack
-- **React 18** with TypeScript
-- **Tailwind CSS** for styling
-- **React Query** for API state management
-- **React Router** for navigation
-- **React Hook Form** for form handling
-
-## Development
+## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js 18+
-- PostgreSQL 14+
-- npm or yarn
+- **Node.js** 18+ and npm
+- **Docker** and Docker Compose
+- **Git**
 
-### Environment Setup
-1. Clone the repository
-2. Set up backend (see backend/README.md)
-3. Set up frontend (instructions coming soon)
+### 🔧 Backend Setup
 
-## Features
+#### Option 1: Docker Compose (Recommended)
 
-### ✅ Implemented (Backend)
-- Complete REST API with 80+ endpoints
-- JWT authentication and authorization
-- Role-based access control (Admin, Moderator, User)
-- Database with Prisma ORM
-- File upload and media management
-- AI integration for learning assistance
-- Content moderation system
-- Advanced search and filtering
-- Real-time notifications (via WebSocket)
-- Comprehensive test coverage
+1. **Clone and Navigate**
+   ```bash
+   git clone <repository-url>
+   cd education-platform/backend
+   ```
 
-### 🚧 In Development (Frontend)
-- User interface for all backend features
-- Responsive design for mobile and desktop
-- Real-time updates and notifications
-- Rich content editor
-- Interactive learning tools
+2. **Environment Configuration**
+   ```bash
+   # Copy environment file
+   cp .dotenv .env
+   
+   # Edit .env file with your configurations
+   nano .env
+   ```
 
-## Contributing
+3. **Start Services with Docker**
+   ```bash
+   # Build and start all services (MySQL + NestJS + phpMyAdmin)
+   docker-compose up -d --build
+   ```
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+4. **Database Migration**
+   ```bash
+   # Apply database schema
+   docker-compose exec app npx prisma db push
+   
+   # Optional: Seed database with sample data
+   docker-compose exec app npm run prisma:seed
+   ```
 
-## License
+5. **Verify Installation**
+   ```bash
+   # Check service status
+   docker-compose ps
+   
+   # View application logs
+   docker-compose logs -f app
+   ```
 
-This project is licensed under the MIT License.
+#### Option 2: Local Development
 
-## Support
+1. **Install Dependencies**
+   ```bash
+   cd backend
+   npm install
+   ```
 
-For questions and support, please open an issue in the GitHub repository.
+2. **Setup Local MySQL Database**
+   ```bash
+   # Install and start MySQL 8.0
+   # Create database: education_platform
+   ```
+
+3. **Configure Environment**
+   ```bash
+   # Update .env with local database URL
+   DATABASE_URL="mysql://username:password@localhost:3306/education_platform"
+   ```
+
+4. **Run Migrations and Start**
+   ```bash
+   # Apply database schema
+   npx prisma db push
+   
+   # Start development server
+   npm run start:dev
+   ```
+
+### 🎨 Frontend Setup
+
+1. **Navigate and Install**
+   ```bash
+   cd frontend
+   npm install
+   ```
+
+2. **Environment Configuration**
+   ```bash
+   # Create .env file
+   touch .env
+   ```
+
+3. **Start Development Server**
+   ```bash
+   npm start
+   ```
+
+4. **Build for Production**
+   ```bash
+   npm run build
+   ```
+
+## ⚙️ Environment Variables
+
+### Backend (.env)
+```
+Copy file dotenv to .env
+```
+
+### Frontend (.env)
+```
+Copy file dotenv to .env
+```
+
+## � API Documentation
+
+- **Base URL**: `http://localhost:3001/api/v1`
+- **Postman Collection**: [backend/postman_collection.json](backend/postman_collection.json)
+- **API Documentation**: [backend/API_DOCUMENTATION.md](backend/API_DOCUMENTATION.md)
+- **Database Schema**: [backend/DATABASE_SCHEMA_OVERVIEW.md](backend/DATABASE_SCHEMA_OVERVIEW.md)
+- **Docker Setup Guide**: [backend/DOCKER_SETUP.md](backend/DOCKER_SETUP.md)
+
+### 🔗 Service URLs
+- **Backend API**: http://localhost:3001
+- **Frontend App**: http://localhost:3000
+- **phpMyAdmin**: http://localhost:8080
+- **Prisma Studio**: `npx prisma studio` (port 5555)
+
+## � Development Guidelines
+
+- Follow TypeScript strict mode
+- Use ESLint and Prettier for code formatting
+- Write tests for new features
+- Update documentation for API changes
+- Follow semantic commit messages
+- Use feature branches for development
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+1. **Database Connection Issues**
+   ```bash
+   # Check if MySQL is running
+   docker-compose ps
+   
+   # Restart MySQL service
+   docker-compose restart mysql
+   ```
+
+
+3. **Prisma Issues**
+   ```bash
+   # Reset database
+   npx prisma db push --force-reset
+   
+   # Generate Prisma client
+   npx prisma generate
+   ```
+
+## 📜 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 💡 Support
+
+- **Documentation**: Check the `/backend/docs` folder
+- **API Testing**: Import Postman collection from `/backend/postman_collection.json`
+
+### Latest Updates
+- ✅ Growth hack contribution system implemented
+- ✅ Media upload with Cloudinary integration
+- ✅ Comprehensive commenting system
+- ✅ Role-based access control
+- ✅ Docker containerization with MySQL
+- ✅ Production-ready API with 80+ endpoints
